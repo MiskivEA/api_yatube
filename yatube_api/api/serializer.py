@@ -14,7 +14,6 @@ class GroupSerializer(serializers.ModelSerializer):
 
 
 class CommentSerializer(serializers.ModelSerializer):
-    #author = serializers.PrimaryKeyRelatedField(read_only=True)
     author = serializers.StringRelatedField(read_only=True)
 
     class Meta:
@@ -24,7 +23,8 @@ class CommentSerializer(serializers.ModelSerializer):
 
 class PostSerializer(serializers.ModelSerializer):
     author = serializers.StringRelatedField(read_only=True)
-    group = serializers.PrimaryKeyRelatedField(required=False, queryset=Group.objects.all())
+    group = serializers.PrimaryKeyRelatedField(required=False,
+                                               queryset=Group.objects.all())
 
     class Meta:
         model = Post
