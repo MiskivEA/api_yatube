@@ -1,26 +1,17 @@
-from rest_framework import viewsets
-from rest_framework.exceptions import PermissionDenied
+from api.serializer import CommentSerializer, GroupSerializer, PostSerializer
+from posts.models import Comment, Group, Post
+from rest_framework import permissions, viewsets
 
-from api.serializer import PostSerializer, GroupSerializer, CommentSerializer
-from posts.models import Post, Group, Comment
+from .permissions import IsAuthorOrReadOnly
 
 
 class PostViewSet(viewsets.ModelViewSet):
     queryset = Post.objects.all()
     serializer_class = PostSerializer
+    permission_classes = (permissions.IsAuthenticated, IsAuthorOrReadOnly)
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
-
-    def perform_update(self, serializer):
-        if serializer.instance.author != self.request.user:
-            raise PermissionDenied
-        super(PostViewSet, self).perform_update(serializer)
-
-    def perform_destroy(self, serializer):
-        if serializer.author != self.request.user:
-            raise PermissionDenied
-        super(PostViewSet, self).perform_destroy(serializer)
 
 
 class GroupViewSet(viewsets.ReadOnlyModelViewSet):
@@ -30,6 +21,7 @@ class GroupViewSet(viewsets.ReadOnlyModelViewSet):
 
 class CommentViewSet(viewsets.ModelViewSet):
     serializer_class = CommentSerializer
+    permission_classes = (permissions.IsAuthenticated, IsAuthorOrReadOnly)
 
     def get_queryset(self):
         post_id = self.kwargs.get('post_id')
@@ -37,14 +29,5 @@ class CommentViewSet(viewsets.ModelViewSet):
         return new_queryset
 
     def perform_create(self, serializer):
-        serializer.save(author=self.request.user)
-
-    def perform_update(self, serializer):
-        if serializer.instance.author != self.request.user:
-            raise PermissionDenied
-        super(CommentViewSet, self).perform_update(serializer)
-
-    def perform_destroy(self, serializer):
-        if serializer.author != self.request.user:
-            raise PermissionDenied
-        super(CommentViewSet, self).perform_destroy(serializer)
+        serializer.save(author=self.request.user,
+                        post=Post.objects.get(pk=self.kwargs.get('post_id')))
